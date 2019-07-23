@@ -138,6 +138,7 @@ public class OrderMapper1_12 implements OrderMapper {
             EncounterTransaction.OrderSet orderSet = new EncounterTransaction.OrderSet(openMRSOrderGroup.getOrderSet().getUuid());
             orderGroup.setOrderSet(orderSet);
             drugOrder.setOrderGroup(orderGroup);
+            drugOrder.setSortWeight(openMRSDrugOrder.getSortWeight());
         }
         return drugOrder;
     }
@@ -155,6 +156,7 @@ public class OrderMapper1_12 implements OrderMapper {
         emrOrder.setOrderNumber(order.getOrderNumber());
         emrOrder.setCommentToFulfiller(order.getCommentToFulfiller());
         emrOrder.setAction(order.getAction().name());
+        emrOrder.setUrgency(String.valueOf(order.getUrgency()));
         Order previousOrder = order.getPreviousOrder();
         if (previousOrder != null && StringUtils.isNotBlank(previousOrder.getUuid())) {
             emrOrder.setPreviousOrderUuid(previousOrder.getUuid());

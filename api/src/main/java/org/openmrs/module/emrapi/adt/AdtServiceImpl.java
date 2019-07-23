@@ -20,6 +20,7 @@ import org.openmrs.EncounterRole;
 import org.openmrs.EncounterType;
 import org.openmrs.Form;
 import org.openmrs.Location;
+import org.openmrs.LocationTag;
 import org.openmrs.Obs;
 import org.openmrs.Order;
 import org.openmrs.Patient;
@@ -121,19 +122,27 @@ public class AdtServiceImpl extends BaseOpenmrsService implements AdtService {
 
     @Override
     public void closeInactiveVisits() {
-        List<Visit> openVisits = visitService.getVisits(null, null, null, null, null, null, null, null, null, false, false);
-        for (Visit visit : openVisits) {
-            if (shouldBeClosed(visit)) {
-                try {
-                    closeAndSaveVisit(visit);
-                } catch (Exception ex) {
-                    log.warn("Failed to close inactive visit " + visit, ex);
+        Collection<Location> possibleLocations = getPossibleLocationsToCloseVisit();
+        List<Visit> openVisits = visitService.getVisits(null, null, possibleLocations, null, null, null, null, null, null, false, false);
+            for (Visit visit : openVisits) {
+                if (shouldBeClosed(visit)) {
+                    try {
+                        closeAndSaveVisit(visit);
+                    } catch (Exception ex) {
+                        log.warn("Failed to close inactive visit " + visit, ex);
+                    }
                 }
-            }
         }
     }
 
-    private boolean shouldBeClosed(Visit visit) {
+    private Collection<Location> getPossibleLocationsToCloseVisit() {
+        LocationTag visitLocationTag =  locationService.getLocationTagByName(EmrApiConstants.LOCATION_TAG_SUPPORTS_VISITS);
+
+        return locationService.getLocationsByTag(visitLocationTag);
+    }
+
+    @Override
+    public boolean shouldBeClosed(Visit visit) {
 
         if (visit.getStopDatetime() != null) {
             return false;  // already closed
@@ -159,7 +168,7 @@ public class AdtServiceImpl extends BaseOpenmrsService implements AdtService {
 
         if (visit.getEncounters() != null) {
             for (Encounter candidate : visit.getEncounters()) {
-                if (OpenmrsUtil.compare(candidate.getEncounterDatetime(), mustHaveSomethingAfter) >= 0) {
+                if (!candidate.isVoided() && OpenmrsUtil.compare(candidate.getEncounterDatetime(), mustHaveSomethingAfter) >= 0) {
                     return false;
                 }
             }
@@ -298,7 +307,7 @@ public class AdtServiceImpl extends BaseOpenmrsService implements AdtService {
         if (activeVisit == null) {
             activeVisit = ensureActiveVisit(patient, where);
         }
-        
+
         Encounter lastEncounter = getLastEncounter(patient);
 		if (lastEncounter != null && activeVisit.equals(lastEncounter.getVisit())
 		        && emrApiProperties.getCheckInEncounterType().equals(lastEncounter.getEncounterType())
@@ -486,7 +495,7 @@ public class AdtServiceImpl extends BaseOpenmrsService implements AdtService {
 
     private boolean itBelongsToARealPatient(Visit candidate) {
         Patient patient = candidate.getPatient();
-        PatientDomainWrapper domainWrapper = new PatientDomainWrapper(patient, emrApiProperties, null, null, null, null);
+        PatientDomainWrapper domainWrapper = new PatientDomainWrapper(patient, emrApiProperties, null, null, null, null, null);
         return !domainWrapper.isTestPatient();
     }
 
@@ -546,6 +555,13 @@ public class AdtServiceImpl extends BaseOpenmrsService implements AdtService {
             throw new IllegalArgumentException("Cannot merge a permanent record into an unknown one");
         }
 
+        // do any "before-merge actions" that have been registered
+        if (patientMergeActions != null) {
+            for (PatientMergeAction patientMergeAction : patientMergeActions) {
+                patientMergeAction.beforeMergingPatients(preferred, notPreferred);
+            }
+        }
+
         List<Visit> preferredVisits = visitService.getVisitsByPatient(preferred, true, false);
         List<Visit> notPreferredVisits = visitService.getVisitsByPatient(notPreferred, true, false);
 
@@ -580,12 +596,6 @@ public class AdtServiceImpl extends BaseOpenmrsService implements AdtService {
             }
         }
 
-        if (patientMergeActions != null) {
-            for (PatientMergeAction patientMergeAction : patientMergeActions) {
-                patientMergeAction.beforeMergingPatients(preferred, notPreferred);
-            }
-        }
-
         try {
             patientService.mergePatients(preferred, notPreferred);
             // if we merged an unknown record into a permanent one, remove the unknown flag; if we merged two unknown records, keep it
@@ -596,6 +606,7 @@ public class AdtServiceImpl extends BaseOpenmrsService implements AdtService {
             throw new APIException("Unable to merge patients due to serialization error", e);
         }
 
+        // do any "after-merge actions" that have been registered
         if (patientMergeActions != null) {
             for (PatientMergeAction patientMergeAction : patientMergeActions) {
                 patientMergeAction.afterMergingPatients(preferred, notPreferred);

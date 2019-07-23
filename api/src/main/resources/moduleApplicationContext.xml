@@ -35,7 +35,7 @@
         </property>
     </bean>
 
-    <bean id="diagnosisService" class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean">
+    <bean id="emrDiagnosisService" class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean">
         <property name="transactionManager">
             <ref bean="transactionManager"/>
         </property>
@@ -58,7 +58,7 @@
         <property name="moduleService">
             <list merge="true">
                 <value>${project.parent.groupId}.${project.parent.artifactId}.diagnosis.DiagnosisService</value>
-                <ref local="diagnosisService"/>
+                <ref local="emrDiagnosisService"/>
             </list>
         </property>
     </bean>
@@ -260,15 +260,26 @@
         <constructor-arg ref="encounterService"/>
     </bean>
 
+    <bean id="emrVisitDAOImpl" class="${project.parent.groupId}.${project.parent.artifactId}.db.EmrVisitDAOImpl">
+        <property name="sessionFactory">
+            <ref bean="dbSessionFactory"/>
+        </property>
+    </bean>
+
+    <bean id="emrVisitServiceImpl" class="${project.parent.groupId}.${project.parent.artifactId}.visit.EmrVisitServiceImpl">
+        <constructor-arg ref="visitService"/>
+        <constructor-arg ref="visitResponseMapper"/>
+        <property name="dao">
+            <ref local="emrVisitDAOImpl"/>
+        </property>
+    </bean>
+
     <bean id="emrVisitService" class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean">
         <property name="transactionManager">
             <ref bean="transactionManager"/>
         </property>
         <property name="target">
-            <bean class="org.openmrs.module.emrapi.visit.EmrVisitServiceImpl">
-                <constructor-arg  ref="visitService"/>
-                <constructor-arg  ref="visitResponseMapper"/>
-            </bean>
+            <ref local="emrVisitServiceImpl"/>
         </property>
         <property name="preInterceptors">
             <ref bean="serviceInterceptors"/>
@@ -294,12 +305,6 @@
     </bean>
 
     <bean id="conceptMapper" class="org.openmrs.module.emrapi.encounter.ConceptMapper"/>
-
-    <bean id="observationMapper" class="org.openmrs.module.emrapi.encounter.ObservationMapper">
-        <constructor-arg name="conceptMapper" ref="conceptMapper"/>
-        <constructor-arg name="drugMapper" ref="drugMapper"/>
-        <constructor-arg name="userMapper" ref="userMapper"/>
-    </bean>
 
     <bean id="diagnosisMapper" class="org.openmrs.module.emrapi.encounter.DiagnosisMapper">
     </bean>
@@ -369,9 +374,34 @@
         </property>
     </bean>
 
+    <bean parent="serviceContext">
+        <property name="moduleService">
+            <list merge="true">
+                <value>${project.parent.groupId}.${project.parent.artifactId}.visit.EmrVisitService</value>
+                <ref local="emrVisitService"/>
+            </list>
+        </property>
+    </bean>
+
     <bean id="emrEncounterDAO" class="${project.parent.groupId}.${project.parent.artifactId}.db.HibernateEmrEncounterDAO">
         <property name="sessionFactory">
             <ref bean="dbSessionFactory"/>
+        </property>
+    </bean>
+
+    <bean id="dbSessionDAO" class="org.openmrs.module.emrapi.db.DbSessionDAOImpl">
+        <property name="sessionFactory"><ref bean="dbSessionFactory"/></property>
+    </bean>
+    <bean id="dbSessionUtil" class="org.openmrs.module.emrapi.db.DbSessionUtil">
+        <property name="dbSessionDAO"><ref bean="dbSessionDAO"/></property>
+    </bean>
+    
+    <bean id="encounterTypetoVisitTypeMapper" class="org.openmrs.module.emrapi.adt.EncounterTypetoVisitTypeMapper">
+        <property name="adminService">
+            <ref bean="adminService"/>
+        </property>
+        <property name="visitService">
+            <ref bean="visitService"/>
         </property>
     </bean>
 

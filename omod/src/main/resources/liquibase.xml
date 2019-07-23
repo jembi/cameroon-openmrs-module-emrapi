@@ -80,4 +80,5 @@
             <column name="uuid"/>
         </createIndex>
     </changeSet>
+    
 </databaseChangeLog>

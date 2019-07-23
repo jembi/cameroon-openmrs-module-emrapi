@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>org.openmrs.module</groupId>
 		<artifactId>emrapi</artifactId>
-		<version>1.14-SNAPSHOT</version>
+		<version>1.24.5</version>
 	</parent>
 
 	<artifactId>emrapi-omod</artifactId>
@@ -43,12 +43,6 @@
             <version>${project.parent.version}</version>
             <scope>compile</scope>
         </dependency>
-        <dependency>
-            <groupId>${project.parent.groupId}</groupId>
-            <artifactId>${project.parent.artifactId}-api</artifactId>
-            <version>${project.parent.version}</version>
-            <scope>test</scope>
-        </dependency>
 
         <dependency>
             <groupId>org.openmrs.web</groupId>
@@ -57,6 +51,7 @@
             <version>${openMRSVersion}</version>
             <scope>provided</scope>
         </dependency>
+
         <dependency>
             <groupId>org.openmrs.web</groupId>
             <artifactId>openmrs-web</artifactId>
@@ -64,17 +59,21 @@
             <version>${openMRSVersion}</version>
             <scope>test</scope>
         </dependency>
+
         <dependency>
             <groupId>org.openmrs.module</groupId>
-            <artifactId>webservices.rest-omod-common</artifactId>
-            <type>test-jar</type>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.openmrs.module</groupId>
-            <artifactId>webservices.rest-omod-1.8</artifactId>
+        	<artifactId>webservices.rest-omod-1.8</artifactId>
+        	<version>${webservices.restVersion}</version>
             <scope>provided</scope>
         </dependency>
+
+        <dependency>
+            <groupId>org.openmrs.module</groupId>
+            <artifactId>webservices.rest-omod-1.9</artifactId>
+            <version>${webservices.restVersion}</version>
+            <scope>provided</scope>
+        </dependency>
+
         <dependency>
             <groupId>org.openmrs.test</groupId>
             <artifactId>openmrs-test</artifactId>
@@ -82,6 +81,15 @@
             <type>pom</type>
             <scope>test</scope>
         </dependency>
+
+        <dependency>
+            <groupId>org.openmrs.api</groupId>
+            <artifactId>openmrs-api</artifactId>
+            <type>jar</type>
+            <version>${openMRSVersion}</version>
+            <scope>provided</scope>
+        </dependency>
+
         <dependency>
             <groupId>org.openmrs.api</groupId>
             <artifactId>openmrs-api</artifactId>
@@ -89,18 +97,40 @@
             <type>test-jar</type>
             <scope>test</scope>
             <exclusions>
-                  <exclusion>
-                      <groupId>javassist</groupId>
-                      <artifactId>javassist</artifactId>
-                  </exclusion>
+                <exclusion>
+                    <groupId>javassist</groupId>
+                    <artifactId>javassist</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
+
         <dependency>
-		    <groupId>org.apache.tomcat</groupId>
-		    <artifactId>jasper</artifactId>
-		    <version>6.0.18</version>
-		    <scope>test</scope>
-	     </dependency>
+            <groupId>org.apache.tomcat</groupId>
+            <artifactId>jasper</artifactId>
+            <version>6.0.18</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.openmrs.module</groupId>
+            <artifactId>reportingcompatibility-api</artifactId>
+            <version>2.0.2</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.codehaus.jackson</groupId>
+            <artifactId>jackson-core-asl</artifactId>
+            <version>1.9.13</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.codehaus.jackson</groupId>
+            <artifactId>jackson-mapper-asl</artifactId>
+            <version>1.9.13</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
 	<build>
@@ -143,7 +173,7 @@
 						<includeEmptyDirs>true</includeEmptyDirs>
 					</configuration>
 				</plugin>
-				<!--This plugin's configuration is used to store Eclipse m2e settings 
+				<!--This plugin's configuration is used to store Eclipse m2e settings
 					only. It has no influence on the Maven build itself. -->
 				<plugin>
 					<groupId>org.eclipse.m2e</groupId>
@@ -221,7 +251,7 @@
 							<includeGroupIds>${project.parent.groupId}</includeGroupIds>
 							<includeArtifactIds>${project.parent.artifactId}-api</includeArtifactIds>
 							<excludeTransitive>true</excludeTransitive>
-							<includes>**/*</includes>
+							<includes>**\/*.xml,**\/*.properties</includes>
 							<outputDirectory>${project.build.directory}/classes</outputDirectory>
 						</configuration>
 					</execution>
@@ -344,7 +374,7 @@
                 <activeByDefault>false</activeByDefault>
             </activation>
             <properties>
-                <openMRSVersion>1.12.0-SNAPSHOT</openMRSVersion>
+                <openMRSVersion>1.12.0</openMRSVersion>
             </properties>
 
             <build>
@@ -357,6 +387,36 @@
                             <argLine>-Xmx512m -XX:MaxPermSize=512m</argLine>
                             <includes>
                                 <include>**/*_1_12_Test.java</include>
+                            </includes>
+                            <classpathDependencyExcludes>
+                                <classpathDependencyExcludes>${project.parent.groupId}:${project.parent.artifactId}-api-1.9</classpathDependencyExcludes>
+                                <classpathDependencyExcludes>${project.parent.groupId}:${project.parent.artifactId}-api-1.10</classpathDependencyExcludes>
+                                <classpathDependencyExcludes>${project.parent.groupId}:${project.parent.artifactId}-api-1.11</classpathDependencyExcludes>
+                            </classpathDependencyExcludes>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>MRS2.0</id>
+            <properties>
+                <openMRSVersion>2.0.1</openMRSVersion>
+                <jacksonVersion>1.9.13</jacksonVersion>
+                <reportingApiConditionalArtifactId>reporting-api-2.0</reportingApiConditionalArtifactId>
+            </properties>
+
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <version>2.6</version>
+                        <configuration>
+                            <argLine>-Xmx512m -XX:MaxPermSize=512m</argLine>
+                            <includes>
+                                <include>**/*_2_0_Test.java</include>
+                                <include>**/*_2_0_IT.java</include>
                             </includes>
                             <classpathDependencyExcludes>
                                 <classpathDependencyExcludes>${project.parent.groupId}:${project.parent.artifactId}-api-1.9</classpathDependencyExcludes>

@@ -19,6 +19,7 @@ import org.openmrs.util.OpenmrsConstants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 
+import java.lang.reflect.Method;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -337,7 +338,15 @@ public class AccountDomainWrapper implements DomainWrapper {
         }
         user.removeUserProperty(OpenmrsConstants.USER_PROPERTY_LOCKOUT_TIMESTAMP);
         user.removeUserProperty(OpenmrsConstants.USER_PROPERTY_LOGIN_ATTEMPTS);
-        userService.saveUser(user, null);
+
+        // hack to work-around change to service methods for saving users in Core 2.x
+        try {
+            Method saveUser = UserService.class.getDeclaredMethod("saveUser", User.class);
+            saveUser.invoke(userService, user);
+        }
+        catch (Exception e) {
+            userService.createUser(user, password);
+        };
     }
 
     public void save() {
@@ -348,7 +357,20 @@ public class AccountDomainWrapper implements DomainWrapper {
 
         if (user != null) {
             boolean existingUser = (user.getUserId() != null);
-            userService.saveUser(user, password);
+
+            if (!existingUser) {
+                userService.createUser(user, password);
+            }
+            else {
+                // hack to work-around change to service methods for saving users in Core 2.x
+                try {
+                    Method saveUser = UserService.class.getDeclaredMethod("saveUser", User.class);
+                    saveUser.invoke(userService, user);
+                }
+                catch (Exception e) {
+                    userService.createUser(user, password);
+                }
+            }
 
             // the saveUser(user, password) method will *only* set a password for a new user, it won't change an existing one
             if (existingUser && StringUtils.isNotBlank(password) && StringUtils.isNotBlank(confirmPassword)) {

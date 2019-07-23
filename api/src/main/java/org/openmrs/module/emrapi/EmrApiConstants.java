@@ -14,6 +14,13 @@
 
 package org.openmrs.module.emrapi;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.ArrayList;
+
 /**
  *
  */
@@ -73,6 +80,12 @@ public class EmrApiConstants {
 
     public static final String PRIVILEGE_LEVEL_FULL_UUID = "ab2160f6-0941-430c-9752-6714353fbd3c";
 
+    public static final String PRIVILEGE_LEVEL_HIGH_ROLE = ROLE_PREFIX_PRIVILEGE_LEVEL + "High";
+
+    public static final String PRIVILEGE_LEVEL_HIGH_DESCRIPTION = "A role that has all API privileges except administrative privileges with security implications";
+
+    public static final String PRIVILEGE_LEVEL_HIGH_UUID = "f089471c-e00b-468e-96e8-46aea1b339af";
+
     public static final String PRIVILEGE_PREFIX_APP = "App: ";
 
     public static final String PRIVILEGE_PREFIX_TASK = "Task: ";
@@ -100,6 +113,10 @@ public class EmrApiConstants {
     public static final String EMR_CONCEPT_SOURCE_NAME = "org.openmrs.module.emrapi";
 
     public static final String EMR_CONCEPT_SOURCE_DESCRIPTION = "Source used to tag concepts used in the EMR API module";
+
+    public static final String EMR_METADATA_SOURCE_NAME = "org.openmrs.module.emrapi";
+
+    public static final String EMR_METADATA_SOURCE_DESCRIPTION = "Source used to tag metadata used in the EMR API module";
 
     public static final String EMR_CONCEPT_SOURCE_UUID = "edd52713-8887-47b7-ba9e-6e1148824ca4";
 
@@ -173,5 +190,21 @@ public class EmrApiConstants {
 */
 
     public static final String CONCEPT_CODE_DISPOSITION_CONCEPT = "Disposition";
+
     public static final String LOCATION_TAG_SUPPORTS_DISPENSING = "Dispensing Location";
+
+    public static final String EXTRA_PATIENT_IDENTIFIER_TYPES_DESCR = "Extra Patient Identifier Types that should be displayed";
+    
+    public static final String GP_VISIT_ASSIGNMENT_HANDLER_ENCOUNTER_TYPE_TO_VISIT_TYPE_MAP = "emrapi.EmrApiVisitAssignmentHandler.encounterTypeToNewVisitTypeMap";
+
+    public static final String EMR_CONCEPT_SOURCES_FOR_DIAGNOSIS_SEARCH =  "emrapi.conceptSourcesForDiagnosisSearch";
+
+    public static final ArrayList<String> UNSAFE_PRIVILEGES = new ArrayList<String>(Arrays.asList(
+            "Share Metadata",
+            "Edit Reports",
+            "Add Reports",
+            "Add Report Objects",
+            "Edit Report Objects",
+            "Manage Privileges"
+    ));
 }

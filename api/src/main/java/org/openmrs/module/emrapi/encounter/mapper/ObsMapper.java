@@ -28,7 +28,7 @@ import java.util.Set;
 import static org.openmrs.module.emrapi.utils.GeneralUtils.getCurrentDateIfNull;
 
 @Component("obsMapper")
-@OpenmrsProfile(openmrsVersion = "[1.9.* - 1.10.*]")
+@OpenmrsProfile(openmrsPlatformVersion = "[1.9.* - 1.10.*]")
 public class ObsMapper {
 
     private ConceptService conceptService;
@@ -87,7 +87,7 @@ public class ObsMapper {
         return observationData.getVoided();
     }
 
-    private void mapObservationProperties(EncounterTransaction.Observation observationData, Obs observation) {
+    protected void mapObservationProperties(EncounterTransaction.Observation observationData, Obs observation) {
         if(setVoidedObs(observationData, observation))
             return;
         observation.setComment(observationData.getComment());

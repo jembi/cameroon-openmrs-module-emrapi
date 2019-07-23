@@ -14,6 +14,7 @@
 package org.openmrs.module.emrapi.encounter;
 
 import org.apache.commons.lang.time.DateUtils;
+import org.hibernate.FlushMode;
 import org.openmrs.Encounter;
 import org.openmrs.EncounterType;
 import org.openmrs.Form;
@@ -30,6 +31,7 @@ import org.openmrs.api.ProviderService;
 import org.openmrs.api.VisitService;
 import org.openmrs.api.context.Context;
 import org.openmrs.api.impl.BaseOpenmrsService;
+import org.openmrs.module.emrapi.db.DbSessionUtil;
 import org.openmrs.module.emrapi.encounter.domain.EncounterTransaction;
 import org.openmrs.module.emrapi.encounter.exception.EncounterMatcherNotFoundException;
 import org.openmrs.module.emrapi.encounter.matcher.BaseEncounterMatcher;
@@ -106,6 +108,23 @@ public class EmrEncounterServiceImpl extends BaseOpenmrsService implements EmrEn
 
     @Override
     public EncounterTransaction save(EncounterTransaction encounterTransaction) {
+
+        EncounterTransaction updatedEncounterTransaction = null;
+
+        FlushMode flushMode = DbSessionUtil.getCurrentFlushMode();
+        DbSessionUtil.setManualFlushMode();
+        Context.flushSession();
+        
+        try {
+            updatedEncounterTransaction = saveInternal(encounterTransaction);
+        } finally {
+            DbSessionUtil.setFlushMode(flushMode);
+        }
+
+        return updatedEncounterTransaction;
+    }
+
+        private EncounterTransaction saveInternal(EncounterTransaction encounterTransaction) {
         Patient patient = patientService.getPatientByUuid(encounterTransaction.getPatientUuid());
         Visit visit = findOrCreateVisit(encounterTransaction, patient);
         Encounter encounter = findOrCreateEncounter(encounterTransaction, patient, visit);
@@ -148,7 +167,7 @@ public class EmrEncounterServiceImpl extends BaseOpenmrsService implements EmrEn
         EncounterParameters encounterParameters = EncounterParameters.instance().
                             setPatient(patient).setEncounterType(encounterType).setProviders(providers).setLocation(location);
 
-        Visit visit = getActiveVisit(patient);
+        Visit visit = getActiveVisit(patient, null);
 
         if (visit == null) {
             return new EncounterTransaction();
@@ -213,9 +232,22 @@ public class EmrEncounterServiceImpl extends BaseOpenmrsService implements EmrEn
         return encounters;
     }
 
-    private Visit getActiveVisit(Patient patient) {
-        List<Visit> activeVisitsByPatient = visitService.getActiveVisitsByPatient(patient);
-        return activeVisitsByPatient != null && !activeVisitsByPatient.isEmpty() ? activeVisitsByPatient.get(0) : null;
+    private Visit getVisitBasedOnLocation(String locationUuid, List<Visit> activeVisits) {
+        for (Visit visit : activeVisits) {
+            Location visitLocation = visit.getLocation();
+            if (visitLocation != null && (visitLocation.getUuid()).equals(locationUuid)){
+                return visit;
+            }
+        }
+        return null;
+    }
+
+    private Visit getActiveVisit(Patient patient, String visitLocationUuid) {
+        List<Visit> activeVisits = visitService.getActiveVisitsByPatient(patient);
+        if (visitLocationUuid != null) {
+            return getVisitBasedOnLocation(visitLocationUuid, activeVisits);
+        }
+        return activeVisits != null && !activeVisits.isEmpty() ? activeVisits.get(0) : null;
     }
 
     private Encounter findOrCreateEncounter(EncounterTransaction encounterTransaction, Patient patient, Visit visit) {
@@ -280,12 +312,16 @@ public class EmrEncounterServiceImpl extends BaseOpenmrsService implements EmrEn
             return visitService.getVisitByUuid(encounterTransaction.getVisitUuid());
         }
 
-        Visit activeVisit = getActiveVisit(patient);
-        if (activeVisit != null){
+        String visitLocationUuid = encounterTransaction.getVisitLocationUuid();
+        Visit activeVisit = getActiveVisit(patient, visitLocationUuid);
+
+        if(activeVisit != null) {
             return activeVisit;
         }
 
+        Location location = locationService.getLocationByUuid(visitLocationUuid);
         Visit visit = new Visit();
+        visit.setLocation(location);
         visit.setPatient(patient);
         visit.setVisitType(visitService.getVisitTypeByUuid(encounterTransaction.getVisitTypeUuid()));
         visit.setStartDatetime(getCurrentDateIfNull(encounterTransaction.getEncounterDateTime()));
@@ -293,5 +329,4 @@ public class EmrEncounterServiceImpl extends BaseOpenmrsService implements EmrEn
         visit.setUuid(UUID.randomUUID().toString());
         return visit;
     }
-
 }

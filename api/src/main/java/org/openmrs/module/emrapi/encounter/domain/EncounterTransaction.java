@@ -47,6 +47,12 @@ public class EncounterTransaction {
     private Set<Provider> providers = new HashSet<Provider>();
     private Map<String,Object> extensions = new HashMap<String,Object>();
     private Map<String, Object> context = new HashMap<String, Object>();
+    private String visitLocationUuid;
+
+
+    public String getVisitLocationUuid() { return visitLocationUuid; }
+
+    public void setVisitLocationUuid(String visitLocationUuid) { this.visitLocationUuid = visitLocationUuid; }
 
     public EncounterTransaction() {
     }
@@ -375,6 +381,9 @@ public class EncounterTransaction {
         private String formNamespace;
         private String formFieldPath;
 
+        private String interpretation;
+        private String status;
+
         public String getFormNamespace() {
             return formNamespace;
         }
@@ -489,6 +498,24 @@ public class EncounterTransaction {
         @JsonSerialize(using = CustomJsonDateSerializer.class)
         public Date getObservationDateTime() {
             return observationDateTime;
+        }
+
+        public String getInterpretation() {
+            return interpretation;
+        }
+
+        public Observation setInterpretation(String interpretation) {
+            this.interpretation = interpretation;
+            return this;
+        }
+
+        public String getStatus() {
+            return status;
+        }
+
+        public Observation setStatus(String status) {
+            this.status = status;
+            return this;
         }
     }
 
@@ -614,6 +641,15 @@ public class EncounterTransaction {
         private String action;
         private String commentToFulfiller;
         private Date autoExpireDate;
+        private String urgency;
+
+        public void setUrgency(String urgency) {
+            this.urgency = urgency;
+        }
+
+        public String getUrgency() {
+            return urgency;
+        }
 
         public Date getAutoExpireDate() {
             return autoExpireDate;
@@ -774,6 +810,7 @@ public class EncounterTransaction {
         private Date diagnosisDateTime;
         private boolean voided;
         private String voidReason;
+        private String comments;
         private Set<Provider> providers = new HashSet<Provider>();
 
         public String getOrder() {
@@ -854,6 +891,15 @@ public class EncounterTransaction {
         public Set<Provider> getProviders() {
             return providers;
         }
+
+        public String getComments() {
+            return comments;
+        }
+
+        public Diagnosis setComments(String comments) {
+            this.comments = comments;
+            return this;
+        }
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
@@ -874,7 +920,7 @@ public class EncounterTransaction {
         private String voidReason;
         private EncounterTransaction.Concept orderReasonConcept;
 
-        private Integer sortWeight;
+        private Double sortWeight;
 
         public Drug getDrug() {
             return drug;
@@ -995,11 +1041,11 @@ public class EncounterTransaction {
             return voidReason;
         }
 
-        public Integer getSortWeight() {
+        public Double getSortWeight() {
             return sortWeight;
         }
 
-        public void setSortWeight(Integer sortWeight) {
+        public void setSortWeight(Double sortWeight) {
             this.sortWeight = sortWeight;
         }
     }
