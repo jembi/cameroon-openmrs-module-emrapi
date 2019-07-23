@@ -44,11 +44,12 @@ public class EmrConceptSearchController {
 
     @RequestMapping(method = RequestMethod.GET)
     @ResponseBody
-    public Object search(@RequestParam("term") String query, @RequestParam Integer limit) throws Exception {
+    public Object search(@RequestParam("term") String query, @RequestParam Integer limit, @RequestParam("locale") String locale) throws Exception {
         Collection<Concept> diagnosisSets = emrApiProperties.getDiagnosisSets();
         List<ConceptSource> conceptSources = emrApiProperties.getConceptSourcesForDiagnosisSearch();
+        LocaleUtility.setDefaultLocaleCache(new Locale(locale));
         List<ConceptSearchResult> conceptSearchResults =
-                emrService.conceptSearch(query, LocaleUtility.getDefaultLocale(), null, diagnosisSets, conceptSources, limit);
+            emrService.conceptSearch(query, LocaleUtility.getDefaultLocale(), null, diagnosisSets, conceptSources, limit);
         ConceptSource conceptSource = conceptSources.isEmpty() ? null: conceptSources.get(0);
         return createListResponse(conceptSearchResults, conceptSource);
     }
