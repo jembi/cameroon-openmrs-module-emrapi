@@ -42,16 +42,14 @@ public class EmrConceptSearchController {
 
     @RequestMapping(method = RequestMethod.GET)
     @ResponseBody
-    public Object search(@RequestParam("term") String query, @RequestParam Integer limit) throws Exception {
-
+    public Object search(@RequestParam("term") String query, @RequestParam Integer limit, @RequestParam("locale") String locale) throws Exception {
         Collection<Concept> diagnosisSets = emrApiProperties.getDiagnosisSets();
-        Locale locale = Locale.ENGLISH;
-        List<ConceptSearchResult> conceptSearchResults = emrService.conceptSearch(query, locale, null, diagnosisSets, null, limit);
-        List<ConceptName> matchingConceptNames = new ArrayList<ConceptName>();
-        for (ConceptSearchResult searchResult : conceptSearchResults) {
-            matchingConceptNames.add(searchResult.getConceptName());
-        }
-        return createListResponse(matchingConceptNames);
+        List<ConceptSource> conceptSources = emrApiProperties.getConceptSourcesForDiagnosisSearch();
+        LocaleUtility.setDefaultLocaleCache(new Locale(locale));
+        List<ConceptSearchResult> conceptSearchResults =
+            emrService.conceptSearch(query, LocaleUtility.getDefaultLocale(), null, diagnosisSets, conceptSources, limit);
+        ConceptSource conceptSource = conceptSources.isEmpty() ? null: conceptSources.get(0);
+        return createListResponse(conceptSearchResults, conceptSource);
     }
 
     private List<SimpleObject> createListResponse(List<ConceptName> resultList) {
